@@ -295,13 +295,8 @@ def test_query_cls_is_form_dict():
 def test_query_to_string():
     qs = 'a=1&b=2'
     q = mod.QueryDict(qs)
-    # The string is ideally 'a=1&b=2', but the order of parameters is not
-    # guaranteed due to the way dicts work in Python. Therefore, we have n
-    # choice but to test the presence of fragments.
-    s = str(q)
-    assert 'a=1' in s
-    assert 'b=2' in s
-    assert '&' in s
+    # NOTE: order of keys is non-deterministic
+    assert str(q) in ['a=1&b=2', 'b=2&a=1']
 
 
 def test_query_empty():
@@ -313,6 +308,60 @@ def test_query_with_unicode():
     q = mod.QueryDict()
     q['a'] = 'јуникод'
     assert str(q) == 'a=%D1%98%D1%83%D0%BD%D0%B8%D0%BA%D0%BE%D0%B4'
+
+
+def test_query_add():
+    q = mod.QueryDict()
+    q.add_qparam(a=1)
+    assert str(q) == 'a=1'
+
+
+def test_query_add_multiple():
+    q = mod.QueryDict()
+    q.add_qparam(a=1, b=2)
+    assert str(q) in ['a=1&b=2', 'b=2&a=1']
+
+
+def test_query_add_chaining():
+    q = mod.QueryDict()
+    q.add_qparam(a=1).add_qparam(b=2)
+    assert str(q) in ['a=1&b=2', 'b=2&a=1']
+
+
+def test_query_set():
+    q = mod.QueryDict('a=1')
+    q.set_qparam(a=0)
+    assert str(q) == 'a=0'
+
+
+def test_query_delete():
+    q = mod.QueryDict('a=1&b=2')
+    q.del_qparam('a')
+    assert str(q) == 'b=2'
+
+
+def test_query_delete_multiple():
+    q = mod.QueryDict('a=1&b=2')
+    q.del_qparam('a', 'b')
+    assert str(q) == ''
+
+
+def test_query_delete_chaining():
+    q = mod.QueryDict('a=1&b=2')
+    q.del_qparam('a').set_qparam(b=0)
+    assert str(q) == 'b=0'
+
+
+def test_query_set_multiple():
+    q = mod.QueryDict('a=1&b=2')
+    q.set_qparam(a=0, b=0)
+    assert str(q) in ['a=0&b=0', 'b=0&a=0']
+
+
+def test_query_set_chaining():
+    q = mod.QueryDict('a=1')
+    q.set_qparam(a=0).add_qparam(a=2)
+    assert str(q) in ['a=0&a=2', 'a=2&a=0']
 
 
 def test_add_qparam():

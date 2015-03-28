@@ -18,7 +18,7 @@ from decimal import Decimal
 from dateutil.parser import parse
 from bottle import request, html_escape, FormsDict, _parse_qsl
 
-from .common import *
+from .common import to_unicode, attr_escape, basestring, unicode
 
 
 SIZES = 'KMGTP'
@@ -50,6 +50,9 @@ class QueryDict(FormsDict):
         Note that the order of parameters in the resulting query string may
         differ from the original.
 
+        Further more, additional methods have been added to provide chaining
+        capability in conjunction with ``*_qparam()`` functions in this module.
+
         Since this class is a ``bottle.FormsDict`` subclass, you can expect it
         to behave the same way as a regular ``FormsDict`` object. You can
         assign values to keys, get values by key, get all items as a list of
@@ -57,6 +60,50 @@ class QueryDict(FormsDict):
         for more information on how ``FormsDict`` objects work.
         """
         super(QueryDict, self).__init__(_parse_qsl(qs))
+
+    def add_qparam(self, **params):
+        """ Add query parameter
+
+        Any keyword arguments passed to this function will be converted to
+        query parameters.
+
+        Returns the instance for further chainign.
+
+        :returns:   this instance
+        """
+        for param, value in params.items():
+            self.append(param, unicode(value))
+        return self
+
+    def set_qparam(self, **params):
+        """ Replace or add parameter
+
+        Any keyword arguments passed to this function will be converted to
+        query parameters.
+
+        Returns the instance for further chainign.
+
+        :returns:   this instance
+        """
+        for param, value in params.items():
+            self.replace(param, unicode(value))
+        return self
+
+    def del_qparam(self, *params):
+        """ Replace or add parameter
+
+        Takes any number of parameter names to be removed.
+
+        Returns the instance for further chainign.
+
+        :returns:   this instance
+        """
+        for param in params:
+            try:
+                del self[param]
+            except KeyError:
+                pass
+        return self
 
     def __str__(self):
         return '&'.join(['{}={}'.format(k, quote(v.encode('utf8')))
@@ -750,9 +797,7 @@ def add_qparam(qs, **params):
     :returns:           QueryDict object
     """
     qs = _to_qdict(qs)
-    for param, value in params.items():
-        qs.append(param, unicode(value))
-    return qs
+    return qs.add_qparam(**params)
 
 
 def set_qparam(qs, **params):
@@ -769,9 +814,7 @@ def set_qparam(qs, **params):
     :returns:           QueryDict object
     """
     qs = _to_qdict(qs)
-    for param, value in params.items():
-        qs.replace(param, unicode(value))
-    return qs
+    return qs.set_qparam(**params)
 
 
 def del_qparam(qs, *params):
@@ -788,12 +831,7 @@ def del_qparam(qs, *params):
     :returns:           QueryDict object
     """
     qs = _to_qdict(qs)
-    for param in params:
-        try:
-            del qs[param]
-        except KeyError:
-            pass
-    return qs
+    return qs.del_qparam(*params)
 
 
 def perc_range(n, min_val, max_val, rounding=2):
