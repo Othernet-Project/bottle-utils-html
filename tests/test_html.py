@@ -11,13 +11,6 @@ Licensed under BSD license. See ``LICENSE`` file in the source directory.
 
 from __future__ import unicode_literals
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-
-from bottle import FormsDict
-
 import bottle_utils.html as mod
 
 
@@ -292,71 +285,82 @@ def test_yesno_custom_yes_no():
     assert mod.yesno(False, 'available', 'not available') == 'not available'
 
 
-@mock.patch(MOD + 'request')
-def test_to_qs(request):
-    request.path = '/'
-    query = FormsDict([('a', '1'), ('b', '3')])
-    ret = mod.to_qs(query)
-    assert 'a=1' in ret
-    assert 'b=3' in ret
+def test_query_cls_is_form_dict():
+    qs = 'a=1&b=2'
+    q = mod.QueryDict(qs)
+    assert q['a'] == '1'
+    assert q['b'] == '2'
 
 
-@mock.patch(MOD + 'request')
-def test_to_qs_dict(request):
-    request.path = '/'
-    query = {'a': '1', 'b': '3'}
-    ret = mod.to_qs(query)
-    assert 'a=1' in ret
-    assert 'b=3' in ret
+def test_query_to_string():
+    qs = 'a=1&b=2'
+    q = mod.QueryDict(qs)
+    # The string is ideally 'a=1&b=2', but the order of parameters is not
+    # guaranteed due to the way dicts work in Python. Therefore, we have n
+    # choice but to test the presence of fragments.
+    s = str(q)
+    assert 'a=1' in s
+    assert 'b=2' in s
+    assert '&' in s
 
 
-@mock.patch(MOD + 'request')
-def test_to_qs_unicode(request):
-    request.path = '/'
-    query = {'a': 'јуникод'}
-    assert mod.to_qs(query) == '/?a=%D1%98%D1%83%D0%BD%D0%B8%D0%BA%D0%BE%D0%B4'
+def test_query_empty():
+    q = mod.QueryDict()
+    assert str(q) == ''
 
 
-@mock.patch(MOD + 'request')
-def test_add_qparam(request):
-    request.path = '/'
-    request.query = FormsDict([('a', '1'), ('b', '3'), ('c', '4')])
-    ret = mod.add_qparam(a='0')
-    assert 'a=0' in ret
-    assert 'a=1' in ret
+def test_query_with_unicode():
+    q = mod.QueryDict()
+    q['a'] = 'јуникод'
+    assert str(q) == 'a=%D1%98%D1%83%D0%BD%D0%B8%D0%BA%D0%BE%D0%B4'
 
 
-@mock.patch(MOD + 'request')
-def test_add_qparam_unicode_coercion(request):
-    request.path = '/'
-    request.query = FormsDict([('a', '1'), ('b', '3'), ('c', '4')])
-    ret = mod.add_qparam(a=0)
-    assert 'a=0' in ret
-    assert 'a=1' in ret
+def test_add_qparam():
+    qs = 'a=1&b=3&c=4'
+    ret = mod.add_qparam(qs, a='0')
+    assert 'a=0' in str(ret)
+    assert 'a=1' in str(ret)
 
 
-@mock.patch(MOD + 'request')
-def test_set_qparam(request):
-    request.path = '/'
-    request.query = FormsDict([('a', '1'), ('b', '3'), ('c', '4')])
-    ret = mod.set_qparam(a='0')
-    assert 'a=0' in ret
-    assert 'a=1' not in ret
+def test_add_qparam_unicode_coercion():
+    qs = 'a=1&b=3&c=4'
+    ret = mod.add_qparam(qs, a=0)
+    assert 'a=0' in str(ret)
+    assert 'a=1' in str(ret)
 
 
-@mock.patch(MOD + 'request')
-def test_set_qparam_unicode_coercion(request):
-    request.path = '/'
-    request.query = FormsDict([('a', '1'), ('b', '3'), ('c', '4')])
-    ret = mod.set_qparam(a='0')
-    assert 'a=0' in ret
-    assert 'a=1' not in ret
+def test_add_qparam_chaining():
+    qs = 'a=1&b=3&c=4'
+    ret = mod.add_qparam(mod.add_qparam(qs, a=0), d=2)
+    assert 'a=0' in str(ret)
+    assert 'd=2' in str(ret)
 
 
-@mock.patch(MOD + 'request')
-def test_del_qparam(request):
-    request.path = '/'
-    request.query = FormsDict([('a', '1'), ('b', '3'), ('c', '4')])
-    ret = mod.set_qparam(a='0')
-    assert 'a=1' not in ret
+def test_set_qparam():
+    qs = 'a=1&b=3&c=4'
+    ret = mod.set_qparam(qs, a='0')
+    assert 'a=0' in str(ret)
+    assert 'a=1' not in str(ret)
+
+
+def test_set_qparam_unicode_coercion():
+    qs = 'a=1&b=3&c=4'
+    ret = mod.set_qparam(qs, a=0)
+    assert 'a=0' in str(ret)
+    assert 'a=1' not in str(ret)
+
+
+def test_set_qparam_multiple():
+    qs = 'a=1&b=3&c=4'
+    ret = mod.set_qparam(mod.set_qparam(qs, a=2), b=4)
+    assert 'a=2' in str(ret)
+    assert 'a=1' not in str(ret)
+    assert 'b=4' in str(ret)
+    assert 'b=3' not in str(ret)
+
+
+def test_del_qparam():
+    qs = 'a=1&b=3&c=4'
+    ret = mod.del_qparam(qs, 'a')
+    assert 'a=1' not in str(ret)
 

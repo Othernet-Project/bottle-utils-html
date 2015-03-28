@@ -14,10 +14,9 @@ try:
 except ImportError:
     from urllib.parse import quote
 
-
 from decimal import Decimal
-from bottle import request, html_escape
 from dateutil.parser import parse
+from bottle import request, html_escape, FormsDict, _parse_qsl
 
 from .common import *
 
@@ -26,6 +25,43 @@ SIZES = 'KMGTP'
 FERR_CLS = 'form-errors'
 FERR_ONE_CLS = 'form-error'
 ERR_CLS = 'field-error'
+
+
+class QueryDict(FormsDict):
+    """ Represents a query string in ``bottle.FormsDict`` format """
+    def __init__(self, qs=''):
+        """
+        This class differs from the base ``bottle.FormsDict`` class in two
+        ways.  First, it is instantiated with q raw query string, rather than a
+        list of two-tuples::
+
+            >>> q = QueryDict('a=1&b=2')
+
+        The query string is parsed and converted to ``FormsDict`` format. This
+        works exactly the same way as ``request.query``.
+
+        Second difference is the way string coercion is handled. ``QueryDict``
+        instances can be converted back into a query string by coercing them
+        into string or bytestring::
+
+            >>> str(q)
+            'a=1&b=2'
+
+        Note that the order of parameters in the resulting query string may
+        differ from the original.
+
+        Since this class is a ``bottle.FormsDict`` subclass, you can expect it
+        to behave the same way as a regular ``FormsDict`` object. You can
+        assign values to keys, get values by key, get all items as a list of
+        key-value tuples, and so on. Please consult the Bottle documentation
+        for more information on how ``FormsDict`` objects work.
+        """
+        super(QueryDict, self).__init__(_parse_qsl(qs))
+
+    def __str__(self):
+        return '&'.join(['{}={}'.format(k, quote(v.encode('utf8')))
+                         for k, v in self.allitems()])
+
 
 
 # DATA FORMATTING
@@ -688,55 +724,76 @@ def to_qs(mapping):
         ['%s=%s' % (k, quote(v.encode('utf8'))) for k, v in pairs])
 
 
-def add_qparam(**new_params):
+_to_qdict = lambda qs: QueryDict(qs) if isinstance(qs, basestring) else qs
+
+
+def add_qparam(qs, **params):
     """
-    Add query string parameter on current path in request context.
+    Add parameter to query string
 
-    The return value of this function is current request path with parameters
-    appended.
+    Any keyword arguments passed to this function will be converted to query
+    parameters.
 
-    :param new_params:  key-value pairs to add
-    :returns:           path with query string parameter added
+    The returned object is a :py:func:`~bottle_utils.html.QueryDict` instance,
+    which is a ``bottle.FormsDict`` subclass.
+
+    Example::
+
+        >>> q = add_qparam('a=1', b=2)
+        >>> str(q)
+        'a=1&b=2'
+        >> q = add_qparam('a=1', a=2)
+        >>> str(q)
+        'a=1&a=2'
+
+    :param qs:          query string or QueryDict instance
+    :returns:           QueryDict object
     """
-    params = request.query.decode()
-    for param, value in new_params.items():
-        params.append(param, unicode(value))
-    return to_qs(params)
+    qs = _to_qdict(qs)
+    for param, value in params.items():
+        qs.append(param, unicode(value))
+    return qs
 
 
-def set_qparam(**new_params):
+def set_qparam(qs, **params):
     """
-    Replace query string parameter on current path in request context.
+    Replace or add parameters to query string
 
-    The return value of this function is current request path with parameters
-    replaced.
+    Any keyword arguments passed to this function will be converted to query
+    parameters.
 
-    :param new_params:  key-value pairs to set
-    :returns:           path with query string parameter replaced
+    The returned object is a :py:func:`~bottle_utils.html.QueryDict` instance,
+    which is a ``bottle.FormsDict`` subclass.
+
+    :param qs:          query string or QueryDict instance
+    :returns:           QueryDict object
     """
-    params = request.query.decode()
-    for param, value in new_params.items():
-        params.replace(param, unicode(value))
-    return to_qs(params)
+    qs = _to_qdict(qs)
+    for param, value in params.items():
+        qs.replace(param, unicode(value))
+    return qs
 
 
-def del_qparam(delete_params):
+def del_qparam(qs, *params):
     """
-    Remove query string parameter on current path in request context.
+    Remove query string parameters
 
-    The return value of this function is current request path with parameters
-    removed.
+    Second and subsequent positional arguments are query parameter names to be
+    removed from the query string.
 
-    :param params:  parameter names to delete
-    :returns:       path with query string parameter removed
+    The returned object is a :py:func:`~bottle_utils.html.QueryDict` instance,
+    which is a ``bottle.FormsDict`` subclass.
+
+    :param qs:          query string or QueryDict instance
+    :returns:           QueryDict object
     """
-    params = request.query.decode()
-    for param in delete_params:
+    qs = _to_qdict(qs)
+    for param in params:
         try:
-            del params[param]
+            del qs[param]
         except KeyError:
             pass
-    return to_qs(params)
+    return qs
 
 
 def perc_range(n, min_val, max_val, rounding=2):
