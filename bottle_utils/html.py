@@ -7,7 +7,6 @@
 
 from __future__ import unicode_literals
 
-import types
 import functools
 
 try:
@@ -659,14 +658,14 @@ def form_errors(errors):
     :param errors:  dictionary or dictionary-like object containing field
                     name-error mappings
     """
-    try:
-        return UL(LI(html_escape(errors['_']), _class=FERR_ONE_CLS),
-                  _class=FERR_CLS)
-    except KeyError:
+    if not '_' in errors:
         return ''
-    except TypeError:
-        return P(SPAN(html_escape(errors['_']), _class=FERR_ONE_CLS),
-                 _class=FERR_CLS)
+    if hasattr(errors['_'], '__iter__'):
+        msgs = (html_escape(to_unicode(m)) for m in errors['_'])
+        return UL(LI(msgs, _class=FERR_ONE_CLS), _class=FERR_CLS)
+    else:
+        msg = html_escape(to_unicode(errors['_']))
+        return P(SPAN(msg, _class=FERR_ONE_CLS), _class=FERR_CLS)
 
 
 def to_qs(mapping):
@@ -689,52 +688,72 @@ def to_qs(mapping):
         ['%s=%s' % (k, quote(v.encode('utf8'))) for k, v in pairs])
 
 
-def add_qparam(param, value):
+def add_qparam(**new_params):
     """
     Add query string parameter on current path in request context.
 
-    The return value of this function is current request path with parameter
+    The return value of this function is current request path with parameters
     appended.
 
-    :param param:   parameter name
-    :param value:   value for the parameter
-    :returns:       path with query string parameter added
+    :param new_params:  key-value pairs to add
+    :returns:           path with query string parameter added
     """
     params = request.query.decode()
-    params.append(param, unicode(value))
+    for param, value in new_params.items():
+        params.append(param, unicode(value))
     return to_qs(params)
 
 
-def set_qparam(param, value):
+def set_qparam(**new_params):
     """
     Replace query string parameter on current path in request context.
 
-    The return value of this function is current request path with parameter
+    The return value of this function is current request path with parameters
     replaced.
 
-    :param param:   parameter name
-    :param value:   value for the parameter
-    :returns:       path with query string parameter replaced
+    :param new_params:  key-value pairs to set
+    :returns:           path with query string parameter replaced
     """
     params = request.query.decode()
-    params.replace(param, unicode(value))
+    for param, value in new_params.items():
+        params.replace(param, unicode(value))
     return to_qs(params)
 
 
-def del_qparam(param):
+def del_qparam(delete_params):
     """
     Remove query string parameter on current path in request context.
 
-    The return value of this function is current request path with parameter
-    appended.
+    The return value of this function is current request path with parameters
+    removed.
 
-    :param param:   parameter name
+    :param params:  parameter names to delete
     :returns:       path with query string parameter removed
     """
     params = request.query.decode()
-    try:
-        del params[param]
-    except KeyError:
-        pass
+    for param in delete_params:
+        try:
+            del params[param]
+        except KeyError:
+            pass
     return to_qs(params)
+
+
+def perc_range(n, min_val, max_val, rounding=2):
+    """
+    Return percentage of `n` within `min_val` to `max_val` range
+
+    Example::
+
+        >>> perc_range(40, 20, 60)
+        50
+
+    :param n:           number
+    :param min_val:     smallest value of the range
+    :param max_val:     largest value of the range
+    :param rounding:    number of fractional digits to keep
+    :returns:           percentage of `n` in the range
+    """
+    return round(
+        min([1, max([0, n - min_val]) / (max_val - min_val)]) * 100, rounding)
 
