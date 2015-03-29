@@ -32,7 +32,7 @@ class QueryDict(FormsDict):
     def __init__(self, qs=''):
         """
         This class differs from the base ``bottle.FormsDict`` class in two
-        ways.  First, it is instantiated with q raw query string, rather than a
+        ways.  First, it is instantiated with raw query string, rather than a
         list of two-tuples::
 
             >>> q = QueryDict('a=1&b=2')
@@ -50,8 +50,24 @@ class QueryDict(FormsDict):
         Note that the order of parameters in the resulting query string may
         differ from the original.
 
-        Further more, additional methods have been added to provide chaining
+        Furthermore, additional methods have been added to provide chaining
         capability in conjunction with ``*_qparam()`` functions in this module.
+
+        For instance::
+
+            >>> q = QueryDict('a=1&b=2')
+            >>> q.del_qparam('a').set_qparam(b=3).add_qparam(d=2, k=12)
+            >>> str(s)
+            'b=3&d=2&k=12'
+
+        When used with functions like
+        py:func:`~bottle_utils.html.add_qparam()`, this provides a more
+        intuitive API::
+
+            >>> qs = 'a=1&b=2'
+            >>> q = add_qparam(qs, c=2).set_qparam(a=2)
+            >>> str(q)
+            'a=2&b=2&c=2'
 
         Since this class is a ``bottle.FormsDict`` subclass, you can expect it
         to behave the same way as a regular ``FormsDict`` object. You can
@@ -67,7 +83,7 @@ class QueryDict(FormsDict):
         Any keyword arguments passed to this function will be converted to
         query parameters.
 
-        Returns the instance for further chainign.
+        Returns the instance for further chaining.
 
         :returns:   this instance
         """
