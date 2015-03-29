@@ -28,52 +28,55 @@ ERR_CLS = 'field-error'
 
 
 class QueryDict(FormsDict):
-    """ Represents a query string in ``bottle.FormsDict`` format """
+    """ Represents a query string in ``bottle.FormsDict`` format
+
+    This class differs from the base ``bottle.FormsDict`` class in two ways.
+    First, it is instantiated with raw query string, rather than a list of
+    two-tuples::
+
+        >>> q = QueryDict('a=1&b=2')
+
+    The query string is parsed and converted to ``FormsDict`` format. This
+    works exactly the same way as ``request.query``.
+
+    Second difference is the way string coercion is handled. ``QueryDict``
+    instances can be converted back into a query string by coercing them into
+    string or bytestring::
+
+        >>> str(q)
+        'a=1&b=2'
+
+    Note that the order of parameters in the resulting query string may differ
+    from the original.
+
+    Furthermore, additional methods have been added to provide chaining
+    capability in conjunction with ``*_qparam()`` functions in this module.
+
+    For instance::
+
+        >>> q = QueryDict('a=1&b=2')
+        >>> q.del_qparam('a').set_qparam(b=3).add_qparam(d=2, k=12)
+        >>> str(s)
+        'b=3&d=2&k=12'
+
+    When used with functions like py:func:`~bottle_utils.html.add_qparam()`,
+    this provides a more intuitive API::
+
+        >>> qs = 'a=1&b=2'
+        >>> q = add_qparam(qs, c=2).set_qparam(a=2)
+        >>> str(q)
+        'a=2&b=2&c=2'
+
+    Since this class is a ``bottle.FormsDict`` subclass, you can expect it to
+    behave the same way as a regular ``FormsDict`` object. You can assign
+    values to keys, get values by key, get all items as a list of key-value
+    tuples, and so on. Please consult the Bottle documentation for more
+    information on how ``FormsDict`` objects work.
+    """
+
     def __init__(self, qs=''):
         """
-        This class differs from the base ``bottle.FormsDict`` class in two
-        ways.  First, it is instantiated with raw query string, rather than a
-        list of two-tuples::
-
-            >>> q = QueryDict('a=1&b=2')
-
-        The query string is parsed and converted to ``FormsDict`` format. This
-        works exactly the same way as ``request.query``.
-
-        Second difference is the way string coercion is handled. ``QueryDict``
-        instances can be converted back into a query string by coercing them
-        into string or bytestring::
-
-            >>> str(q)
-            'a=1&b=2'
-
-        Note that the order of parameters in the resulting query string may
-        differ from the original.
-
-        Furthermore, additional methods have been added to provide chaining
-        capability in conjunction with ``*_qparam()`` functions in this module.
-
-        For instance::
-
-            >>> q = QueryDict('a=1&b=2')
-            >>> q.del_qparam('a').set_qparam(b=3).add_qparam(d=2, k=12)
-            >>> str(s)
-            'b=3&d=2&k=12'
-
-        When used with functions like
-        py:func:`~bottle_utils.html.add_qparam()`, this provides a more
-        intuitive API::
-
-            >>> qs = 'a=1&b=2'
-            >>> q = add_qparam(qs, c=2).set_qparam(a=2)
-            >>> str(q)
-            'a=2&b=2&c=2'
-
-        Since this class is a ``bottle.FormsDict`` subclass, you can expect it
-        to behave the same way as a regular ``FormsDict`` object. You can
-        assign values to keys, get values by key, get all items as a list of
-        key-value tuples, and so on. Please consult the Bottle documentation
-        for more information on how ``FormsDict`` objects work.
+        :param qs:  raw query string
         """
         super(QueryDict, self).__init__(_parse_qsl(qs))
 
