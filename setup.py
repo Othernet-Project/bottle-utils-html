@@ -8,6 +8,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 VERSION = bottle_utils.__version__
+RELEASE = '0.3'
 
 setup(
     name='bottle-utils-html',
@@ -23,7 +24,7 @@ setup(
     install_requires=[
         'bottle==0.12.7',
         'python-dateutil==2.2',
-        'bottle-utils-common==%s' % VERSION,
+        'bottle-utils-common~=%s' % RELEASE,
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
