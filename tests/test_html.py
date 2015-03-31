@@ -364,6 +364,11 @@ def test_query_set_chaining():
     assert str(q) in ['a=0&a=2', 'a=2&a=0']
 
 
+def test_to_qs():
+    q = mod.QueryDict('a=1')
+    assert q.to_qs() == '?a=1'
+
+
 def test_add_qparam():
     qs = 'a=1&b=3&c=4'
     ret = mod.add_qparam(qs, a='0')

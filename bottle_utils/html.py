@@ -124,6 +124,9 @@ class QueryDict(MultiDict):
                 pass
         return self
 
+    def to_qs(self):
+        return '?' + str(self)
+
     def __str__(self):
         return '&'.join(['{}={}'.format(k, quote(v.encode('utf8')))
                          for k, v in self.allitems()])
