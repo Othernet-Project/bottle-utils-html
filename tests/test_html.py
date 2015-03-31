@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 """
 test_html.py: Unit tests for ``bottle_utils.html`` module
 
