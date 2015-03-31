@@ -412,4 +412,3 @@ def test_del_qparam():
     qs = 'a=1&b=3&c=4'
     ret = mod.del_qparam(qs, 'a')
     assert 'a=1' not in str(ret)
-

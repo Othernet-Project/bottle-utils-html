@@ -16,7 +16,7 @@ except ImportError:
 
 from decimal import Decimal
 from dateutil.parser import parse
-from bottle import request, html_escape, FormsDict, _parse_qsl
+from bottle import request, html_escape, MultiDict, _parse_qsl
 
 from .common import to_unicode, attr_escape, basestring, unicode
 
@@ -27,7 +27,7 @@ FERR_ONE_CLS = 'form-error'
 ERR_CLS = 'field-error'
 
 
-class QueryDict(FormsDict):
+class QueryDict(MultiDict):
     """ Represents a query string in ``bottle.FormsDict`` format
 
     This class differs from the base ``bottle.FormsDict`` class in two ways.
