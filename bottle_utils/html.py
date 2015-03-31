@@ -28,15 +28,15 @@ ERR_CLS = 'field-error'
 
 
 class QueryDict(MultiDict):
-    """ Represents a query string in ``bottle.FormsDict`` format
+    """ Represents a query string in ``bottle.MultiDict`` format
 
-    This class differs from the base ``bottle.FormsDict`` class in two ways.
+    This class differs from the base ``bottle.MultiDict`` class in two ways.
     First, it is instantiated with raw query string, rather than a list of
     two-tuples::
 
         >>> q = QueryDict('a=1&b=2')
 
-    The query string is parsed and converted to ``FormsDict`` format. This
+    The query string is parsed and converted to ``MultiDict`` format. This
     works exactly the same way as ``request.query``.
 
     Second difference is the way string coercion is handled. ``QueryDict``
@@ -67,11 +67,11 @@ class QueryDict(MultiDict):
         >>> str(q)
         'a=2&b=2&c=2'
 
-    Since this class is a ``bottle.FormsDict`` subclass, you can expect it to
-    behave the same way as a regular ``FormsDict`` object. You can assign
+    Since this class is a ``bottle.MultiDict`` subclass, you can expect it to
+    behave the same way as a regular ``MultiDict`` object. You can assign
     values to keys, get values by key, get all items as a list of key-value
     tuples, and so on. Please consult the Bottle documentation for more
-    information on how ``FormsDict`` objects work.
+    information on how ``MultiDict`` objects work.
     """
 
     def __init__(self, qs=''):
@@ -127,7 +127,6 @@ class QueryDict(MultiDict):
     def __str__(self):
         return '&'.join(['{}={}'.format(k, quote(v.encode('utf8')))
                          for k, v in self.allitems()])
-
 
 
 # DATA FORMATTING
@@ -392,7 +391,8 @@ def tag(name, content='', nonclosing=False, **attrs):
     """
     open_tag = '<%s>' % name
     close_tag = '</%s>' % name
-    attrs = ' '.join([attr(k.lstrip('_'), to_unicode(v)) for k, v in attrs.items()])
+    attrs = ' '.join([attr(k.lstrip('_'), to_unicode(v))
+                      for k, v in attrs.items()])
     if attrs:
         open_tag = '<%s %s>' % (name, attrs)
     if nonclosing:
@@ -760,7 +760,7 @@ def form_errors(errors):
     :param errors:  dictionary or dictionary-like object containing field
                     name-error mappings
     """
-    if not '_' in errors:
+    if '_' not in errors:
         return ''
     if hasattr(errors['_'], '__iter__'):
         msgs = (html_escape(to_unicode(m)) for m in errors['_'])
@@ -801,7 +801,7 @@ def add_qparam(qs, **params):
     parameters.
 
     The returned object is a :py:func:`~bottle_utils.html.QueryDict` instance,
-    which is a ``bottle.FormsDict`` subclass.
+    which is a ``bottle.MultiDict`` subclass.
 
     Example::
 
@@ -827,7 +827,7 @@ def set_qparam(qs, **params):
     parameters.
 
     The returned object is a :py:func:`~bottle_utils.html.QueryDict` instance,
-    which is a ``bottle.FormsDict`` subclass.
+    which is a ``bottle.MultiDict`` subclass.
 
     :param qs:          query string or QueryDict instance
     :returns:           QueryDict object
@@ -844,7 +844,7 @@ def del_qparam(qs, *params):
     removed from the query string.
 
     The returned object is a :py:func:`~bottle_utils.html.QueryDict` instance,
-    which is a ``bottle.FormsDict`` subclass.
+    which is a ``bottle.MultiDict`` subclass.
 
     :param qs:          query string or QueryDict instance
     :returns:           QueryDict object
@@ -870,4 +870,3 @@ def perc_range(n, min_val, max_val, rounding=2):
     """
     return round(
         min([1, max([0, n - min_val]) / (max_val - min_val)]) * 100, rounding)
-
