@@ -12,6 +12,8 @@ Licensed under BSD license. See ``LICENSE`` file in the source directory.
 
 from __future__ import unicode_literals
 
+import mock
+
 import bottle_utils.html as mod
 
 
@@ -391,6 +393,15 @@ def test_add_qparam_chaining():
     assert 'd=2' in str(ret)
 
 
+@mock.patch(MOD + 'request')
+def test_add_qparam_default_query_string(request):
+    request.query_string = 'a=1&b=2'
+    ret = mod.add_qparam(c=3)
+    assert 'a=1' in str(ret)
+    assert 'b=2' in str(ret)
+    assert 'c=3' in str(ret)
+
+
 def test_set_qparam():
     qs = 'a=1&b=3&c=4'
     ret = mod.set_qparam(qs, a='0')
@@ -414,7 +425,32 @@ def test_set_qparam_multiple():
     assert 'b=3' not in str(ret)
 
 
+@mock.patch(MOD + 'request')
+def test_set_qparam_default(request):
+    request.query_string = 'a=1&b=2'
+    ret = mod.set_qparam(a=2)
+    assert 'a=2' in str(ret)
+    assert 'b=2' in str(ret)
+    assert 'a=1' not in str(ret)
+
+
 def test_del_qparam():
     qs = 'a=1&b=3&c=4'
     ret = mod.del_qparam(qs, 'a')
     assert 'a=1' not in str(ret)
+
+
+def test_del_all():
+    qs = 'a=1&a=2&b=2'
+    ret = mod.del_qparam(qs, 'a')
+    assert 'a=1' not in str(ret)
+    assert 'a=2' not in str(ret)
+    assert 'b=2' in str(ret)
+
+
+@mock.patch(MOD + 'request')
+def test_del_qparam_default(request):
+    request.query_string = 'a=1&b=2'
+    ret = mod.del_qparam(None, 'a')
+    assert 'a=1' not in str(ret)
+    assert 'b=2' in str(ret)

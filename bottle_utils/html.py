@@ -796,9 +796,11 @@ def to_qs(mapping):
 _to_qdict = lambda qs: QueryDict(qs) if isinstance(qs, basestring) else qs
 
 
-def add_qparam(qs, **params):
+def add_qparam(qs=None, **params):
     """
     Add parameter to query string
+
+    If query string is omitted ``request.query_string`` is used.
 
     Any keyword arguments passed to this function will be converted to query
     parameters.
@@ -818,13 +820,16 @@ def add_qparam(qs, **params):
     :param qs:          query string or QueryDict instance
     :returns:           QueryDict object
     """
+    qs = qs or request.query_string
     qs = _to_qdict(qs)
     return qs.add_qparam(**params)
 
 
-def set_qparam(qs, **params):
+def set_qparam(qs=None, **params):
     """
     Replace or add parameters to query string
+
+    If query string is omitted ``request.query_string`` is used.
 
     Any keyword arguments passed to this function will be converted to query
     parameters.
@@ -835,6 +840,7 @@ def set_qparam(qs, **params):
     :param qs:          query string or QueryDict instance
     :returns:           QueryDict object
     """
+    qs = qs or request.query_string
     qs = _to_qdict(qs)
     return qs.set_qparam(**params)
 
@@ -842,6 +848,8 @@ def set_qparam(qs, **params):
 def del_qparam(qs, *params):
     """
     Remove query string parameters
+
+    If query string is ``None`` or empty, ``request.query_string`` is used.
 
     Second and subsequent positional arguments are query parameter names to be
     removed from the query string.
@@ -852,6 +860,7 @@ def del_qparam(qs, *params):
     :param qs:          query string or QueryDict instance
     :returns:           QueryDict object
     """
+    qs = qs or request.query_string
     qs = _to_qdict(qs)
     return qs.del_qparam(*params)
 
