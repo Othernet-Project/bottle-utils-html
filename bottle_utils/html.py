@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 .. module:: bottle_utils.html
    :synopsis: Functions for use in HTML templates
@@ -25,6 +27,13 @@ SIZES = 'KMGTP'
 FERR_CLS = 'form-errors'
 FERR_ONE_CLS = 'form-error'
 ERR_CLS = 'field-error'
+
+
+def to_str(text, encoding='utf-8'):
+    try:
+        return str(text)
+    except Exception:
+        return text.encode(encoding)
 
 
 class QueryDict(MultiDict):
@@ -128,7 +137,7 @@ class QueryDict(MultiDict):
         return '?' + str(self)
 
     def __str__(self):
-        return '&'.join(['{}={}'.format(k, quote(v.encode('utf8')))
+        return '&'.join(['{}={}'.format(k, quote(to_str(v)))
                          for k, v in self.allitems()])
 
 
@@ -790,7 +799,7 @@ def to_qs(mapping):
     except AttributeError:
         pairs = mapping.items()
     return request.path + '?' + '&'.join(
-        ['%s=%s' % (k, quote(v.encode('utf8'))) for k, v in pairs])
+        ['%s=%s' % (k, quote(to_str(v))) for k, v in pairs])
 
 
 _to_qdict = lambda qs: QueryDict(qs) if isinstance(qs, basestring) else qs

@@ -13,6 +13,7 @@ Licensed under BSD license. See ``LICENSE`` file in the source directory.
 from __future__ import unicode_literals
 
 import mock
+import pytest
 
 import bottle_utils.html as mod
 
@@ -370,6 +371,19 @@ def test_query_set_chaining():
 def test_to_qs():
     q = mod.QueryDict('a=1')
     assert q.to_qs() == '?a=1'
+
+
+def test_to_qs_unicode():
+    for case in (u'かわいい',
+                 u'صباح الخير',
+                 u'лепо',
+                 u'les miserablés',
+                 u'nije ćirilica'):
+        q = mod.QueryDict(u'a=' + case)
+        try:
+            assert q.to_qs()
+        except Exception as exc:
+            pytest.fail("Should not raise: {0}".format(exc))
 
 
 def test_add_qparam():
