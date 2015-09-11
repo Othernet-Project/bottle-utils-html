@@ -20,20 +20,13 @@ from decimal import Decimal
 from dateutil.parser import parse
 from bottle import request, html_escape, MultiDict, _parse_qsl
 
-from .common import to_unicode, attr_escape, basestring, unicode
+from .common import to_bytes, to_unicode, attr_escape, basestring, unicode
 
 
 SIZES = 'KMGTP'
 FERR_CLS = 'form-errors'
 FERR_ONE_CLS = 'form-error'
 ERR_CLS = 'field-error'
-
-
-def to_str(text, encoding='utf-8'):
-    try:
-        return str(text)
-    except Exception:
-        return text.encode(encoding)
 
 
 class QueryDict(MultiDict):
@@ -100,7 +93,7 @@ class QueryDict(MultiDict):
         :returns:   this instance
         """
         for param, value in params.items():
-            self.append(param, unicode(value))
+            self.append(param, to_unicode(value))
         return self
 
     def set_qparam(self, **params):
@@ -114,7 +107,7 @@ class QueryDict(MultiDict):
         :returns:   this instance
         """
         for param, value in params.items():
-            self.replace(param, unicode(value))
+            self.replace(param, to_unicode(value))
         return self
 
     def del_qparam(self, *params):
@@ -137,7 +130,7 @@ class QueryDict(MultiDict):
         return '?' + str(self)
 
     def __str__(self):
-        return '&'.join(['{}={}'.format(k, quote(to_str(v)))
+        return '&'.join(['{}={}'.format(k, quote(to_bytes(v)))
                          for k, v in self.allitems()])
 
 
@@ -799,7 +792,7 @@ def to_qs(mapping):
     except AttributeError:
         pairs = mapping.items()
     return request.path + '?' + '&'.join(
-        ['%s=%s' % (k, quote(to_str(v))) for k, v in pairs])
+        ['%s=%s' % (k, quote(to_bytes(v))) for k, v in pairs])
 
 
 _to_qdict = lambda qs: QueryDict(qs) if isinstance(qs, basestring) else qs
